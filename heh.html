@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>20/10 Cho Cậu 💕</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; touch-action:none; }
+    body {
+      background: linear-gradient(to bottom, #ffafbd, #ffc3a0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      max-width: 400px;
+      height: calc(100vw * 1.6);
+      max-height: 700px;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Resize canvas
+function resize() {
+  c.width = Math.min(400, innerWidth * 0.95);
+  c.height = c.width * 1.6;
+}
+addEventListener('resize', resize);
+resize();
+
+// === DỮ LIỆU ===
+const blessings = [
+  "Chúc cậu luôn khỏe mạnh 💪", "Cậu xứng đáng được yêu thương 🌸",
+  "Mỗi nụ cười của cậu rất quý giá 😊", "Tự tin lên — cậu thật rực rỡ! ✨",
+  "Ngủ ngon & mơ đẹp nhé 🌙", "Nghỉ ngơi là chăm sóc bản thân 💆‍♀️",
+  "Cậu đã làm tốt lắm rồi! 😌", "Ăn ngon, ngủ đủ — sức khỏe là vàng 🍓",
+  "Thế giới cần ánh sáng của cậu 🌈", "Là chính mình — đẹp nhất rồi! 💯",
+  "Mỗi ngày cậu đều tỏa sáng 🌺", "Tớ luôn ở đây lắng nghe cậu 💕"
+];
+
+let bird = { x: 0, y: 0, r: 0, v: 0 };
+let pipes = [], score = 0, gameOver = false, frame = 0;
+let blessing = "", blessTimer = 0, lastIdx = -1;
+const flowers = Array(6).fill().map(() => ({
+  x: Math.random()*c.width,
+  y: Math.random()*c.height,
+  s: 16+Math.random()*12,
+  e: ['🌷','🌸','💐','🌼','🌺','🌹'][Math.floor(Math.random()*6)],
+  dy: 0.2+Math.random()*0.3
+}));
+
+// === KHỞI TẠO ===
+function init() {
+  const s = c.width / 400;
+  bird = { x: c.width*0.2, y: c.height/2, r: 14*s, v: 0 };
+  pipes = []; score = 0; gameOver = false; frame = 0;
+  blessing = ""; blessTimer = 0; lastIdx = -1;
+}
+init();
+
+// === VẼ ===
+function draw() {
+  // Nền hồng
+  const g = ctx.createLinearGradient(0,0,0,c.height);
+  g.addColorStop(0, '#ffafbd'); g.addColorStop(1, '#ffc3a0');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,c.width,c.height);
+
+  // Hoa bay
+  flowers.forEach(f => {
+    f.y += f.dy;
+    if (f.y > c.height) f.y = -f.s, f.x = Math.random()*c.width;
+    ctx.font = `bold ${f.s}px Arial`;
+    ctx.fillText(f.e, f.x, f.y);
+  });
+
+  // Ống
+  ctx.fillStyle = '#228B22';
+  ctx.strokeStyle = '#006400';
+  ctx.lineWidth = 2;
+  pipes.forEach(p => {
+    ctx.fillRect(p.x, 0, p.w, p.top);
+    ctx.fillRect(p.x, p.bot, p.w, c.height);
+    ctx.strokeRect(p.x, 0, p.w, p.top);
+    ctx.strokeRect(p.x, p.bot, p.w, c.height - p.bot);
+  });
+
+  // Chim
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'black';
+  ctx.beginPath(); ctx.arc(bird.x+bird.r*0.4, bird.y-bird.r*0.2, bird.r*0.2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#FF8C00';
+  ctx.beginPath();
+  ctx.moveTo(bird.x+bird.r*0.6, bird.y);
+  ctx.lineTo(bird.x+bird.r*1.2, bird.y);
+  ctx.lineTo(bird.x+bird.r*0.6, bird.y+bird.r*0.3);
+  ctx.closePath(); ctx.fill();
+
+  // Tiêu đề
+  ctx.fillStyle = '#e74c3c';
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 3;
+  ctx.font = `bold ${20}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.strokeText('Chúc Mừng 20/10!', c.width/2, 30);
+  ctx.fillText('Chúc Mừng 20/10!', c.width/2, 30);
+
+  // Điểm
+  ctx.fillStyle = 'white';
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 2;
+  ctx.font = `bold ${32}px Arial`;
+  ctx.strokeText(score, c.width/2, 70);
+  ctx.fillText(score, c.width/2, 70);
+
+  // Lời chúc (hiện ở vùng an toàn phía trên)
+  if (blessTimer > 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillRect(20, 100, c.width-40, 50);
+    ctx.fillStyle = '#e74c3c';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.font = `bold ${18}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.strokeText(blessing, c.width/2, 130);
+    ctx.fillText(blessing, c.width/2, 130);
+    blessTimer--;
+  }
+
+  // Game over
+  if (gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = 'white';
+    ctx.font = `bold 24px Arial`;
+    ctx.fillText('Game Over!', c.width/2, c.height/2 - 20);
+    ctx.fillText(`Điểm: ${score}`, c.width/2, c.height/2 + 10);
+    ctx.font = `16px Arial`;
+    ctx.fillText('Chạm hoặc nhấn R để chơi lại', c.width/2, c.height/2 + 50);
+  }
+}
+
+// === CẬP NHẬT ===
+function update() {
+  if (gameOver) return;
+
+  // Chim
+  bird.v += 0.4; // ↓ giảm gravity → dễ chơi hơn
+  bird.y += bird.v;
+
+  if (bird.y - bird.r < 0 || bird.y + bird.r > c.height) gameOver = true;
+
+  // Ống
+  if (frame % 100 === 0) {
+    const gap = 180; // ↑ tăng gap → dễ lọt hơn
+    const top = 40 + Math.random() * (c.height - gap - 80);
+    pipes.push({ x: c.width, top, bot: top + gap, w: 60, passed: false });
+  }
+
+  pipes.forEach(p => {
+    p.x -= 1.8; // ↓ giảm tốc độ
+
+    if (!p.passed && p.x + p.w < bird.x) {
+      score++;
+      p.passed = true;
+      const idx = Math.min(Math.floor(score/5), 11);
+      if (idx !== lastIdx) {
+        lastIdx = idx;
+        blessing = blessings[idx];
+        blessTimer = 180; // 3 giây
+      }
+    }
+
+    if (
+      bird.x + bird.r > p.x &&
+      bird.x - bird.r < p.x + p.w &&
+      (bird.y - bird.r < p.top || bird.y + bird.r > p.bot)
+    ) gameOver = true;
+  });
+
+  pipes = pipes.filter(p => p.x > -p.w);
+  frame++;
+}
+
+// === ĐIỀU KHIỂN ===
+function flap() {
+  if (!gameOver) bird.v = -7; // ↑ giảm lực nhảy → kiểm soát tốt hơn
+  else init();
+}
+c.addEventListener('click', flap);
+c.addEventListener('touchstart', e => { e.preventDefault(); flap(); });
+addEventListener('keydown', e => {
+  if (e.code === 'Space' && !gameOver) { flap(); e.preventDefault(); }
+  if ((e.key === 'r' || e.key === 'R') && gameOver) init();
+});
+
+// === LOOP ===
+setInterval(() => { draw(); update(); }, 1000/60);
+</script>
+</body>
+</html>
